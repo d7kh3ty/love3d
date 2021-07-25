@@ -7,16 +7,17 @@ function sleep(n)
 	while clock() - t <= n / 1000 do end
 end
 
-function obj(file)
-	t = {}
+local function obj(file)
+	-- a table of vertices
+	local faces = {}
 	obj = io.open(file, "r")
 	vertices 	= {}
-	faces 		= {}
 	for line in obj:lines() do
-		temp = {}
+		local temp = {}
 		for str in string.gmatch(line, "([^".."%s".."]+)") do
 			table.insert(temp, str)
 		end
+
 		if temp[1] == "v" then
 			v = {}
 			for i = 2,#temp do
@@ -27,19 +28,21 @@ function obj(file)
 		if temp[1] == "f" then
 			v = {}
 			for i = 2,#temp do
-				table.insert(v, vertices[tonumber(temp[i])])
+				table.insert(v, tonumber(temp[i]))
 			end
-			table.insert(t, v)
+			table.insert(faces, v)
 		end
+	--print("t: ",#faces)
+	-- 6320
+	--print("v: ", #vertices)
 	end
-	print(#t)
-	return t
+	return faces, vertices
 end
 
 
 function love.load()
 	love.mouse.setPosition(love.graphics.getWidth()*0.5, love.graphics.getHeight()*0.5)
-	data = obj("cyl.obj")
+	faces, vertices = obj("teapot.obj")
 end
 
 
@@ -201,8 +204,14 @@ function love.update(dt)
 	end
 
 	polygons = {}
-	for i = 1,#data do
-		table.insert(polygons, projection(clipping(rotation(data[i]))))
+	for i = 1,#faces do
+		local t = {}
+		t[1] = vertices[faces[i][1]]
+		t[2] = vertices[faces[i][2]]
+		t[3] = vertices[faces[i][3]]
+		--print(#vertices)
+		--print(t[1], t[2], t[3])
+		table.insert(polygons, projection(clipping(rotation(t))))
 	end
 end
 
@@ -211,6 +220,7 @@ function love.draw()
 	love.graphics.setBackgroundColor(40/255, 40/255, 40/255)
 	love.graphics.setColor(200/255, 200/255, 200/255)
 	for i = 1,#polygons do
+		print(i, " / 6320")
 		if #polygons[i] >= 6 then
 			love.graphics.polygon('line', polygons[i])
 		end
